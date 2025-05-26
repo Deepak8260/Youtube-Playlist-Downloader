@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Playlist Downloader</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% if progress_data.downloading %}
+    <meta http-equiv="refresh" content="1">
+    {% endif %}
+</head>
+<body>
+    <h1>YouTube Playlist Downloader</h1>
+
+    {% if error %}
+        <p class="message error">{{ error }}</p>
+    {% endif %}
+
+    <div class="form-container">
+        <form method="POST">
+            <label for="playlist_url">Enter YouTube Playlist URL:</label>
+            <input type="text" id="playlist_url" name="playlist_url" required>
+            <button type="submit">Fetch Videos</button>
+        </form>
+    </div>
+
+    {% if videos %}
+        <div class="form-container">
+            <h2>Playlist Videos:</h2>
+            <form method="POST" action="{{ url_for('download') }}">
+                <button type="button" class="toggle-button" onclick="toggleAll(this)">Select All</button>
+                {% for video in videos %}
+                    <div class="video-item">
+                        <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
+                            <input type="checkbox" name="video_urls" value="https://www.youtube.com/watch?v={{ video.id }}" checked>
+                            <span style="margin-left: 15px;">{{ video.title }}</span>
+                        </label>
+                    </div>
+                {% endfor %}
+                <button type="submit">Download Selected Videos</button>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if progress_data.downloading %}
+        <div class="progress-container">
+            <div class="current-file">Currently downloading: {{ progress_data.current_file }}</div>
+            <div class="progress-info">
+                <span>Download Progress</span>
+                <span>{{ progress_data.progress }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ progress_data.progress }}%"></div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        function toggleAll(button) {
+            const checkboxes = document.getElementsByName('video_urls');
+            const isChecked = button.textContent === 'Select All';
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+
+            button.textContent = isChecked ? 'Deselect All' : 'Select All';
+        }
+    </script>
+</body>
+</html>

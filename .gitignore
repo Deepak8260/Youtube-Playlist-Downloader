@@ -1,0 +1,22 @@
+# Downloaded videos and temp files
+downloads/
+*.mp4
+*.mp3
+*.webm
+*.part
+*.ytdl
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
