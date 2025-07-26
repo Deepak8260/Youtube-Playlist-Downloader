@@ -1,77 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>YouTube Playlist Downloader</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    {% if progress_data.downloading %}
-    <meta http-equiv="refresh" content="1">
-    {% endif %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <h1>YouTube Playlist Downloader</h1>
+    <form id="playlistForm">
+        <input type="text" name="playlist_url" placeholder="Enter YouTube Playlist URL" required>
+        <button type="submit">Fetch Videos</button>
+    </form>
 
-    {% if error %}
-        <p class="message error">{{ error }}</p>
-    {% endif %}
-
-    <div class="form-container">
-        <form method="POST">
-            <label for="playlist_url">Enter YouTube Playlist URL:</label>
-            <input type="text" id="playlist_url" name="playlist_url" required>
-            <button type="submit">Fetch Videos</button>
-        </form>
-    </div>
-
-    {% if videos %}
-        <div class="form-container">
-            <h2>Playlist Videos:</h2>
-            <form method="POST" action="{{ url_for('download') }}">
-                <button type="button" class="toggle-button" onclick="toggleAll(this)">Select All</button>
-                {% for video in videos %}
-                    <div class="video-item">
-                        <label style="display: flex; align-items: center; width: 100%; cursor: pointer;">
-                            <input type="checkbox" name="video_urls" value="https://www.youtube.com/watch?v={{ video.id }}" checked>
-                            <span style="margin-left: 15px;">{{ video.title }}</span>
-                        </label>
-                    </div>
-                {% endfor %}
-                <button type="submit">Download Selected Videos</button>
-            </form>
-        </div>
-    {% endif %}
-
-    {% if progress_data.downloading %}
-        <div class="progress-container">
-            <div class="current-file">Currently downloading: {{ progress_data.current_file }}</div>
-            <div class="progress-info">
-                <span>Download Progress</span>
-                <span>{{ progress_data.progress }}%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: {{ progress_data.progress }}%"></div>
-            </div>
-        </div>
-    {% endif %}
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div id="videoList"></div>
+    <div id="status"></div>
 
     <script>
-        function toggleAll(button) {
-            const checkboxes = document.getElementsByName('video_urls');
-            const isChecked = button.textContent === 'Select All';
+        $('#playlistForm').submit(function(e) {
+            e.preventDefault();
+            const url = $('input[name="playlist_url"]').val();
+            $('#videoList').html('Loading...');
+            $.post('/get_playlist_videos', { playlist_url: url }, function(data) {
+                if (data.error) {
+                    $('#videoList').html('<p style="color:red;">' + data.error + '</p>');
+                    return;
+                }
 
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
+                let html = '<h2>Select a Video to Download</h2><ul>';
+                data.videos.forEach(video => {
+                    html += `<li>${video.title} <button onclick="downloadVideo('${video.url}')">Download</button></li>`;
+                });
+                html += '</ul>';
+                $('#videoList').html(html);
             });
+        });
 
-            button.textContent = isChecked ? 'Deselect All' : 'Select All';
+        function downloadVideo(videoUrl) {
+            $('#status').html('Downloading...');
+            $.post('/download_video', { video_url: videoUrl }, function(response) {
+                $('#status').html(response.status);
+            });
         }
     </script>
 </body>
